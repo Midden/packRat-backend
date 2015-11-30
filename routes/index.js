@@ -1,5 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var passport = require('passport');
+var async = require('async');
+var bcrypt = require('bcrypt');
+var models = require('../models'),
+  User = models.User;
 var authCtrl = require('../controllers/auth');
 
 /* GET home page. */

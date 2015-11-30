@@ -1,64 +1,51 @@
+//jshint node:true
+
+'use strict';
+
+var util = require('util');
+
+var Image = require('./models/image.js');
+
 var express = require('express');
-var mongoose = require('mongoose');
 var path = require('path');
-var session = require('express-session');
-var uuid = require('uuid');
-var favicon = require('serve-favicon');
 var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
 var cors = require('cors');
-var errorhandler = require('errorhandler');
+var bodyParser = require('body-parser');
+var multer = require('multer');
+var storage = multer.memoryStorage();
+var upload = multer({ storage: storage });
 
-var MongoStore = require('connect-mongo')(session);
-process.env.SESSION_SECRET || require('dotenv').load();
-// require passport
-// require passport config file
-var passport = require('./lib/passport');
-
-var routes = require('./routes/index');
-var users = require('./routes/users');
+var Image = require('./models/image.js');
 
 var app = express();
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
+//For file upload
+var uploadBaseUrl = function (req) {
+  return util.format('%s://%s:%s/images',
+    req.protocol,
+    req.hostname,
+    app.get ('port'));
+};
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-//app.use(cookieParser('secret'));
-//app.use(cookieSession());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-  secret : process.env.SESSION_SECRET,
-  resave : false,
-  saveUninitialized : false,
-  store : new MongoStore({
-    url : "mongodb://localhost/ga-passport-sessions"
-  }),
-  cookie : {
-    maxAge : 300000 // 5 minutes
-  },
-  genid : function() {
-    return uuid.v4({
-      rng : uuid.nodeRNG
-    });
-  }
-}));
+app.get('/images', function(req, res, next) {
+  Image.find({}, {__v: 0}, function(err, images) {
+    if (err) {
+      next(err);
+      return;
+    }
+    res.json(images);
+  });
+});
 
-// mount return value of `passport.initialize` invocation on `app`
-app.use(passport.initialize());
-
-// mount return value of `passport.session` invocation on `app`
-app.use(passport.session());
-
-app.use('/', routes);
-app.use('/users', users);
+app.post('/images', upload.single('file'), function(req, res, next) {
+  res.json({body: req.body, file: req.file.buffer});
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -67,34 +54,32 @@ app.use(function(req, res, next) {
   next(err);
 });
 
+
 // error handlers
 
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
   app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
+    res.status(err.status || 500).json({
+      'error': {
+        message: err.message,
+        error: err
+      }
     });
   });
 }
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 500).json({
+      'error': {
+        message: err.message,
+        error: {}
+      }
   });
 });
-
-if (process.env.NODE_ENV === 'development') {
-  // only use in development
-  app.use(errorhandler());
-}
 
 
 module.exports = app;

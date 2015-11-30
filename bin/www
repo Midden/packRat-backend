@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-//jshint node:true
 
 /**
  * Module dependencies.
  */
 
 var app = require('../app');
-var debug = require('debug')('node-express-session:server');
+var debug = require('debug')('express-multer:server');
 var http = require('http');
 
 /**
