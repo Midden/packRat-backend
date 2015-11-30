@@ -30,8 +30,8 @@ app.set('view engine', 'hbs');
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieParser('secret'));
-app.use(cookieSession());
+//app.use(cookieParser('secret'));
+//app.use(cookieSession());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(session({
@@ -59,7 +59,6 @@ app.use(passport.session());
 
 app.use('/', routes);
 app.use('/users', users);
-app.use('/images', image);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
